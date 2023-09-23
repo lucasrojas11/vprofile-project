@@ -140,7 +140,150 @@ Install, start & enable memcache on port 11211
 # sudo systemctl restart memcached
 ~~~
 
+# Rabbitmq Setp
+Login to the RabbitMQ vm
+<pre>$ vagrant ssh rmq01</pre>
+Verify Hosts entry, if entries missing update the it with IP and hostnames
+<pre># cat /etc/hosts</pre>
+Update OS with latest patches
+<pre># yum update -y</pre>
+Set EPEL Repository
+<pre># yum install epel-release -y</pre>
+Install Dependencies
+~~~
+# sudo yum install wget -y
+# cd /tmp/
+# dnf -y install centos-release-rabbitmq-38
+# dnf --enablerepo=centos-rabbitmq-38 -y install rabbitmq-server
+# systemctl enable --now rabbitmq-server
+# sudo systemctl start rabbitmq-server
+# sudo systemctl enable rabbitmq-server
+# sudo systemctl status rabbitmq-server
+# sudo sh -c 'echo "[{rabbit, [{loopback_users, []}]}]." > /etc/rabbitmq/rabbitmq.config'
+# sudo rabbitmqctl add_user test test
+# sudo rabbitmqctl set_user_tags test administrator
+# sudo systemctl restart rabbitmq-server
+~~~
 
+# Tomcat Setup
+Login to the tomcat vm
+<pre>$ vagrant ssh app01</pre>
+Verify Hosts entry, if entries missing update the it with IP and hostnames
+<pre># cat /etc/hosts</pre>
+Update OS with latest patches
+<pre># yum update -y</pre>
+Set Repository
+<pre># yum install epel-release -y</pre>
+Install Dependencies
+~~~
+# dnf -y install java-11-openjdk java-11-openjdk-devel
+# dnf install git maven wget -y
+~~~
+Change dir to /tmp
+<pre># cd /tmp/</pre>
+Download & Tomcat Package
+~~~
+# wget https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.75/bin/apache-tomcat-9.0.75.tar.gz
+# tar xzvf apache-tomcat-9.0.75.tar.gz
+~~~
+Add tomcat user
+<pre># useradd --home-dir /usr/local/tomcat --shell /sbin/nologin tomcat</pre>
+Copy data to tomcat home dir
+<pre># cp -r /tmp/apache-tomcat-9.0.75/* /usr/local/tomcat/</pre>
+Make tomcat user owner of tomcat home dir
+~~~
+# chown -R tomcat.tomcat /usr/local/tomcat
+# Setup systemctl command for tomcat
+~~~
+Update file with following content.
+~~~
+# vi /etc/systemd/system/tomcat.service
+[Unit]
+Description=Tomcat
+After=network.target
+[Service]
+User=tomcat
+WorkingDirectory=/usr/local/tomcat
+Environment=JRE_HOME=/usr/lib/jvm/jre
+Environment=JAVA_HOME=/usr/lib/jvm/jre
+Environment=CATALINA_HOME=/usr/local/tomca
+t
+Environment=CATALINE_BASE=/usr/local/tomcat
+ExecStart=/usr/local/tomcat/bin/catalina.sh run
+ExecStop=/usr/local/tomcat/bin/shutdown.sh
+SyslogIdentifier=tomcat-%i
+[Install]
+WantedBy=multi-user.target
+~~~
+Reload systemd files
+<pre># systemctl daemon-reload</pre>
+Start & Enable service
+~~~
+# systemctl start tomcat
+# systemctl enable tomcat
+~~~
+Enabling the firewall and allowing port 8080 to access the tomcat
+~~~
+# systemctl start firewalld
+# systemctl enable firewalld
+# firewall-cmd --get-active-zones
+# firewall-cmd --zone=public --add-port=8080/tcp --permanent
+# firewall-cmd --reload
+~~~
+
+# Code build & deploy (app01)
+Download Source code
+<pre># git clone -b main https://github.com/hkhcoder/vprofile-project.git</pre>
+Update configuration
+~~~
+# cd vprofile-project
+# vim src/main/resources/application.properties
+# Update file with backend server details
+~~~
+Build code
+Run below command inside the repository (vprofile-project)
+<pre># mvn install</pre>
+Deploy artifact
+~~~
+# systemctl stop tomcat
+# rm -rf /usr/local/tomcat/webapps/ROOT*
+# cp target/vprofile-v2.war /usr/local/tomcat/webapps/ROOT.war
+# systemctl start tomcat
+# chown tomcat.tomcat usr/local/tomcat/webapps -R
+# systemctl restart tomcat
+~~~
+
+# Nginx Setup
+Login to the Nginx vm
+<pre>$ vagrant ssh web01</pre>
+Verify Hosts entry, if entries missing update the it with IP and hostnames
+<pre># cat /etc/hosts</pre>
+Update OS with latest patches
+~~~
+# apt update
+# apt upgrade
+~~~
+Install nginx
+<pre># apt install nginx -y</pre>
+Create Nginx conf file with below content
+<pre># vi /etc/nginx/sites-available/vproapp<pre>
+~~~
+upstream vproapp {
+    server app01:8080;
+    }
+    server {
+        listen 80;
+        location /{
+            proxy_pass http://vproapp;
+    }
+}
+~~~
+Remove default nginx conf
+<pre># rm -rf /etc/nginx/sites-enabled/default</pre>
+Create link to activate website
+<pre># ln -s /etc/nginx/sites-available/vproapp /etc/nginx/sites-enabled/vproapp</pre>
+Restart Nginx
+<pre># systemctl restart nginx</pre>
 
 # Technologies 
 - Spring MVC
