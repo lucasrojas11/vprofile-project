@@ -1,7 +1,7 @@
 # Vprofile-project
 In this project, we will have a social media application written in Java that will be served by an Apache Tomcat web server. We have an Nginx server acting as a load balancer, which will have an IP address through which we can access the application. We also have a message broker, as an example, that connects Apache to the database, which stores user information such as usernames and passwords. The database uses an in-memory storage system, Memcached, to speed up the response time of the database. For this project, we have two ways to provision it: manually or automatically. Here, we will explain the manual method step by step.
 Arquitecture:
-![arquitectue](../vprofile-project/Architecture/Screenshot.png)
+![arquitectue](./Architecture/Screenshot.png)
 
 
 # VPROFILE PROJECT SETUP
