@@ -266,8 +266,8 @@ Update OS with latest patches
 Install nginx
 <pre># apt install nginx -y</pre>
 Create Nginx conf file with below content
-<pre># vi /etc/nginx/sites-available/vproapp<pre>
 ~~~
+# vi /etc/nginx/sites-available/vproapp
 upstream vproapp {
     server app01:8080;
     }
