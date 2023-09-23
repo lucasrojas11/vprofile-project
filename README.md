@@ -285,6 +285,27 @@ Create link to activate website
 Restart Nginx
 <pre># systemctl restart nginx</pre>
 
+# Verifay from browser
+
+get the ip address of web01
+~~~
+ip addres show
+
+inet 192.168.56.11
+
+http://192.168.56.11:80
+~~~
+use
+name: admin_vp
+password: admin_vp
+and login
+
+# Automated Execution
+To run the entire process automatically, we should go to vagrant/Automated_provisioning_WinMacIntel and use it.
+~~~
+vagrant up
+~~~
+
 # Technologies 
 - Spring MVC
 - Spring Security
